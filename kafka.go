@@ -53,7 +53,7 @@ func (k Kafka) Produce(topic string, message []byte, erro error) error {
 		k.producer = producer
 	}
 
-	if erro != nil {
+	if erro == nil {
 		k.producer.Produce(topic, message)
 		return nil
 	}
