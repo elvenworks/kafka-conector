@@ -12,20 +12,22 @@ import (
 )
 
 type KafkaConfig struct {
-	Brokers   []string
-	User      string
-	Password  string
-	TLS       bool
-	SASL      bool
-	Mechanism string
-	Auth      bool
+	Brokers       []string
+	User          string
+	Password      string
+	TLS           bool
+	SASL          bool
+	Mechanism     string
+	Auth          bool
+	FallbackTries int
 }
 
 type Kafka struct {
-	brokers  []string
-	config   *sarama.Config
-	producer producer.IProducer
-	consumer consumer.IConsumer
+	brokers       []string
+	config        *sarama.Config
+	producer      producer.IProducer
+	consumer      consumer.IConsumer
+	fallbackTries int
 }
 
 func InitKafka(config KafkaConfig) *Kafka {
@@ -39,8 +41,9 @@ func InitKafka(config KafkaConfig) *Kafka {
 	)
 
 	return &Kafka{
-		brokers: config.Brokers,
-		config:  brokerConfig,
+		brokers:       config.Brokers,
+		config:        brokerConfig,
+		fallbackTries: config.FallbackTries,
 	}
 }
 
@@ -79,7 +82,7 @@ func (k Kafka) Produce(topic string, message []byte, erro error) error {
 		return err
 	}
 
-	if nTries > 3 {
+	if nTries > k.fallbackTries {
 		k.producer.Produce(fmt.Sprintf("%s-grave", topic), bytes)
 	} else {
 		k.producer.Produce(fmt.Sprintf("%s-fallback", topic), bytes)
