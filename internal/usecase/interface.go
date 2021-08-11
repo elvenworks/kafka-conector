@@ -1,4 +1,4 @@
-package usecase
+package kafka
 
 type IKafka interface {
 	Produce(topic string, message []byte, erro error) error
