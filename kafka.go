@@ -90,20 +90,23 @@ func (k Kafka) Produce(topic string, message []byte, erro error) error {
 	return nil
 }
 
-func (k Kafka) Consume(topic, groupName string) (msgChannel chan []byte, msgChannelFallback chan []byte, err error) {
+func (k Kafka) Consume(topic, groupName string) (msgChannel chan []byte, err error) {
 	return k.ConsumeBulk(topic, groupName, 1, 1)
 }
 
-func (k Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, msgChannelFallback chan []byte, err error) {
+func (k Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
 	if k.consumer == nil {
 		consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		k.consumer = consumer
 	}
 
 	msgChan, err := k.consumer.Consume(topic, maxBufferSize, numberOfRoutines)
-	msgChanFallback, err := k.consumer.Consume(fmt.Sprintf("%s-fallback", topic), 1, 1)
-	return msgChan, msgChanFallback, err
+	if err != nil {
+		return nil, err
+	}
+
+	return msgChan, err
 }
