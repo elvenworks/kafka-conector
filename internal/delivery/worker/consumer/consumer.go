@@ -32,6 +32,7 @@ func (c *ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutine
 	var msgsChan = make(chan []byte)
 	for i := 0; i < numberOfRoutines; i++ {
 		go func(channelNumber int) {
+			logrus.Infof("Channel *%v* started and consuming topic *%s*", channelNumber, topic)
 			for messages := range bufChan {
 				for j := range messages {
 					msgsChan <- messages[j].Message.Value
