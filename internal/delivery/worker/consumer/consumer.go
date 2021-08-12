@@ -40,7 +40,7 @@ func (c *ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutine
 				}
 				count += int64(len(messages))
 				if count >= 1000 {
-					logrus.Info(fmt.Sprintf("multi batch consumer channel %v consumed %d messages at speed %.2f/s\n", channelNumber, count, float64(count)/time.Since(start).Seconds()))
+					logrus.Info(fmt.Sprintf("multi batch consumer consumed %d messages at speed %.2f/s\n", count, float64(count)/time.Since(start).Seconds()))
 					start = time.Now()
 					count = 0
 				}
