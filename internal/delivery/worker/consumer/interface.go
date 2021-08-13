@@ -1,5 +1,7 @@
 package consumer
 
+import "github.com/Shopify/sarama"
+
 type IConsumer interface {
-	Consume(topic string, maxBufferSize int, numberOfRoutines int) (chan []byte, error)
+	Consume(brokers []string, topic, group string, config *sarama.Config, maxBufferSize int, numberOfRoutines int) (chan []byte, error)
 }

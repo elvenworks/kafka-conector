@@ -13,19 +13,12 @@ type ConsumerGroup struct {
 	Consumer sarama.ConsumerGroup
 }
 
-func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (*ConsumerGroup, error) {
-	client, err := sarama.NewConsumerGroup(brokers, group, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ConsumerGroup{
-		Consumer: client,
-	}, nil
+func NewConsumerGroup() *ConsumerGroup {
+	return &ConsumerGroup{}
 }
 
 // Consume it's a MultiBatchConsumer
-func (c *ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
+func (c *ConsumerGroup) Consume(brokers []string, topic, group string, config *sarama.Config, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
 	var count int64
 	var start = time.Now()
 	var bufChan = make(chan BatchMessages, 1000)
@@ -51,15 +44,24 @@ func (c *ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutine
 		MaxBufSize: maxBufferSize,
 		BufChan:    bufChan,
 	})
-	c.setHandler([]string{topic}, handler)
+	err := startConsume(brokers, topic, group, config, handler)
+	if err != nil {
+		return nil, err
+	}
 	return msgsChan, nil
 }
 
-func (c *ConsumerGroup) setHandler(topics []string, handler ConsumerGroupHandler) {
+func startConsume(brokers []string, topic, group string, config *sarama.Config, handler ConsumerGroupHandler) error {
 	ctx := context.Background()
+	client, err := sarama.NewConsumerGroup(brokers, group, config)
+	if err != nil {
+		logrus.Fatal(err)
+		return err
+	}
+
 	go func() {
 		for {
-			err := c.Consumer.Consume(ctx, topics, handler)
+			err := client.Consume(ctx, []string{topic}, handler)
 			if err != nil {
 				if err == sarama.ErrClosedConsumerGroup {
 					break
@@ -68,10 +70,13 @@ func (c *ConsumerGroup) setHandler(topics []string, handler ConsumerGroupHandler
 				}
 			}
 			if ctx.Err() != nil {
-				logrus.Info("Error consuming message", ctx.Err())
 				return
 			}
 			handler.Reset()
 		}
 	}()
+
+	handler.WaitReady() // Await till the consumer has been set up
+
+	return nil
 }

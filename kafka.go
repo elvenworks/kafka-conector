@@ -96,14 +96,14 @@ func (k Kafka) Consume(topic, groupName string) (msgChannel chan []byte, err err
 
 func (k Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
 	if k.consumer == nil {
-		consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
+		consumer := consumer.NewConsumerGroup()
 		if err != nil {
 			return nil, err
 		}
 		k.consumer = consumer
 	}
 
-	msgChan, err := k.consumer.Consume(topic, maxBufferSize, numberOfRoutines)
+	msgChan, err := k.consumer.Consume(k.brokers, topic, groupName, k.config, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
