@@ -47,7 +47,7 @@ func InitKafka(config KafkaConfig) *Kafka {
 	}
 }
 
-func (k Kafka) Produce(topic string, message []byte, erro error) error {
+func (k *Kafka) Produce(topic string, message []byte, erro error) error {
 	if k.producer == nil {
 		producer, err := producer.NewProducer(k.brokers, k.config)
 		if err != nil {
@@ -90,20 +90,20 @@ func (k Kafka) Produce(topic string, message []byte, erro error) error {
 	return nil
 }
 
-func (k Kafka) Consume(topic, groupName string) (msgChannel chan []byte, err error) {
+func (k *Kafka) Consume(topic, groupName string) (msgChannel chan []byte, err error) {
 	return k.ConsumeBulk(topic, groupName, 1, 1)
 }
 
-func (k Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
+func (k *Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
 	if k.consumer == nil {
-		consumer := consumer.NewConsumerGroup()
+		consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
 		if err != nil {
 			return nil, err
 		}
 		k.consumer = consumer
 	}
 
-	msgChan, err := k.consumer.Consume(k.brokers, topic, groupName, k.config, maxBufferSize, numberOfRoutines)
+	msgChan, err := k.consumer.Consume(topic, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
