@@ -95,15 +95,12 @@ func (k *Kafka) Consume(topic, groupName string) (msgChannel chan []byte, err er
 }
 
 func (k *Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
-	if k.consumer == nil {
-		consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
-		if err != nil {
-			return nil, err
-		}
-		k.consumer = consumer
+	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
+	if err != nil {
+		return nil, err
 	}
 
-	msgChan, err := k.consumer.Consume(topic, maxBufferSize, numberOfRoutines)
+	msgChan, err := consumer.Consume(topic, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
