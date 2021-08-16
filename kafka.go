@@ -109,7 +109,7 @@ func (k *Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRout
 		return nil, err
 	}
 
-	msgChanFallback, err := consumerFallback.Consume(topic, maxBufferSize, numberOfRoutines)
+	msgChanFallback, err := consumerFallback.Consume(fmt.Sprintf("%s-fallback", topic), 1, 1)
 	if err != nil {
 		return nil, err
 	}
