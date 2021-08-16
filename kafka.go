@@ -26,7 +26,6 @@ type Kafka struct {
 	brokers       []string
 	config        *sarama.Config
 	producer      producer.IProducer
-	consumer      consumer.IConsumer
 	fallbackTries int
 }
 
@@ -90,20 +89,34 @@ func (k *Kafka) Produce(topic string, message []byte, erro error) error {
 	return nil
 }
 
-func (k *Kafka) Consume(topic, groupName string) (msgChannel chan []byte, err error) {
+func (k *Kafka) Consume(topic, groupName string) (msgChannel []chan []byte, err error) {
 	return k.ConsumeBulk(topic, groupName, 1, 1)
 }
 
-func (k *Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
-	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
+func (k *Kafka) ConsumeBulk(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel []chan []byte, err error) {
+	regularConsumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
 	if err != nil {
 		return nil, err
 	}
 
-	msgChan, err := consumer.Consume(topic, maxBufferSize, numberOfRoutines)
+	msgChan, err := regularConsumer.Consume(topic, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
 
-	return msgChan, err
+	consumerFallback, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
+	if err != nil {
+		return nil, err
+	}
+
+	msgChanFallback, err := consumerFallback.Consume(topic, maxBufferSize, numberOfRoutines)
+	if err != nil {
+		return nil, err
+	}
+
+	channels := make([]chan []byte, 2)
+	channels = append(channels, msgChan)
+	channels = append(channels, msgChanFallback)
+
+	return channels, err
 }
