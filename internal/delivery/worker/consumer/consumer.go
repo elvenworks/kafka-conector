@@ -13,19 +13,19 @@ type ConsumerGroup struct {
 	Consumer sarama.ConsumerGroup
 }
 
-func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (ConsumerGroup, error) {
+func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (*ConsumerGroup, error) {
 	client, err := sarama.NewConsumerGroup(brokers, group, config)
 	if err != nil {
-		return ConsumerGroup{}, err
+		return nil, err
 	}
 
-	return ConsumerGroup{
+	return &ConsumerGroup{
 		Consumer: client,
 	}, nil
 }
 
 // Consume it's a MultiBatchConsumer
-func (c ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
+func (c *ConsumerGroup) MultiBatchConsumer(topic []string, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
 	var count int64
 	var start = time.Now()
 	var bufChan = make(chan BatchMessages, 1000)
@@ -51,11 +51,11 @@ func (c ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutines
 		MaxBufSize: maxBufferSize,
 		BufChan:    bufChan,
 	})
-	c.setHandler([]string{topic}, handler)
+	c.setHandler(topic, handler)
 	return msgsChan, nil
 }
 
-func (c ConsumerGroup) setHandler(topics []string, handler ConsumerGroupHandler) {
+func (c *ConsumerGroup) setHandler(topics []string, handler ConsumerGroupHandler) {
 	ctx := context.Background()
 	go func() {
 		for {
