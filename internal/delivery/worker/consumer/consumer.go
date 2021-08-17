@@ -25,7 +25,7 @@ func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (*C
 }
 
 // Consume it's a MultiBatchConsumer
-func (c *ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
+func (c ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
 	var count int64
 	var start = time.Now()
 	var bufChan = make(chan BatchMessages, 1000)
@@ -55,7 +55,7 @@ func (c *ConsumerGroup) Consume(topic string, maxBufferSize int, numberOfRoutine
 	return msgsChan, nil
 }
 
-func (c *ConsumerGroup) setHandler(topics []string, handler ConsumerGroupHandler) {
+func (c ConsumerGroup) setHandler(topics []string, handler ConsumerGroupHandler) {
 	ctx := context.Background()
 	go func() {
 		for {
