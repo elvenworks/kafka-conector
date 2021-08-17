@@ -46,6 +46,10 @@ func InitKafka(config KafkaConfig) *Kafka {
 	}
 }
 
+func (k *Kafka) Produce(topic string, message []byte) error {
+	return k.ProduceWithFallback(topic, message, nil)
+}
+
 func (k *Kafka) ProduceWithFallback(topic string, message []byte, erro error) error {
 	if k.producer == nil {
 		producer, err := producer.NewProducer(k.brokers, k.config)
