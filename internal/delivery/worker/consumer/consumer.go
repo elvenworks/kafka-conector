@@ -13,13 +13,13 @@ type ConsumerGroup struct {
 	Consumer sarama.ConsumerGroup
 }
 
-func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (*ConsumerGroup, error) {
+func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (ConsumerGroup, error) {
 	client, err := sarama.NewConsumerGroup(brokers, group, config)
 	if err != nil {
-		return nil, err
+		return ConsumerGroup{}, err
 	}
 
-	return &ConsumerGroup{
+	return ConsumerGroup{
 		Consumer: client,
 	}, nil
 }
