@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/Shopify/sarama"
@@ -107,4 +108,34 @@ func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numb
 	}
 
 	return msgChan, err
+}
+
+func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
+	syncProducer, err := producer.NewSyncProducer(k.brokers, k.config)
+	if err != nil {
+		return err
+	}
+
+	partition, offset, err := syncProducer.Produce(topic, message)
+	if err != nil {
+		return err
+	}
+
+	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.config)
+	if err != nil {
+		return err
+	}
+
+	msg, err := clientConsumer.Consume(topic, partition, offset)
+	if err != nil {
+		return err
+	}
+
+	if msg == nil {
+		return errors.New("any message has been consumed")
+	}
+
+	logrus.Info("Message consumed right after being produced: ", sarama.StringEncoder(msg))
+
+	return nil
 }
