@@ -139,3 +139,11 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 
 	return nil
 }
+
+func (k *Kafka) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
+	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.config)
+	if err != nil {
+		return 0, err
+	}
+	return clientConsumer.GetLag(topic, consumerGroup)
+}
