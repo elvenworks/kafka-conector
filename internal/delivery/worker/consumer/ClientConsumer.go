@@ -47,3 +47,59 @@ func (c *ClientConsumer) Consume(topic string, partition int32, offset int64) (m
 
 	return msg, nil
 }
+
+func (c *ClientConsumer) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
+
+	partitions, err := c.consumer.Partitions(topic)
+	if err != nil {
+		return 0, err
+	}
+
+	var manager sarama.OffsetManager
+	var partitionManager sarama.PartitionOffsetManager
+
+	for partition := range partitions {
+
+		manager, err = sarama.NewOffsetManagerFromClient(consumerGroup, c.client)
+		if err != nil {
+			return 0, err
+		}
+
+		partitionManager, err = manager.ManagePartition(topic, int32(partition))
+		if err != nil {
+			return 0, err
+		}
+
+		consumerGroupOffset, _ := partitionManager.NextOffset()
+
+		topicOffset, err := c.client.GetOffset(topic, int32(partition), sarama.ReceiveTime)
+		if err != nil {
+			return 0, err
+		}
+
+		lagTotal += (topicOffset - consumerGroupOffset)
+	}
+
+	err = partitionManager.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	err = manager.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	err = c.consumer.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	err = c.client.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	return lagTotal, nil
+
+}
