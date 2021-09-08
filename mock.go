@@ -21,6 +21,11 @@ func (k KafkaMock) ConsumeWithFallback(topic, groupName string, maxBufferSize, n
 	return a.Get(0).(chan []byte), a.Error(1)
 }
 
+func (k KafkaMock) BatchConsumeWithFallback(topic []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
+	a := k.Called(topic, groupName, maxBufferSize, numberOfRoutines)
+	return a.Get(0).(chan []byte), a.Error(1)
+}
+
 func (k KafkaMock) ProduceAndConsumeOnce(topic string, message []byte) error {
 	a := k.Called(topic, message)
 	return a.Error(0)

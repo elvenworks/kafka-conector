@@ -6,4 +6,5 @@ type IKafka interface {
 	ConsumeWithFallback(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error)
 	ProduceAndConsumeOnce(topic string, message []byte) error
 	GetLag(topic, consumerGroup string) (lagTotal int64, err error)
+	BatchConsumeWithFallback(topic []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error)
 }
