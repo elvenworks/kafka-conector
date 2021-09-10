@@ -110,19 +110,19 @@ func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numb
 	return msgChan, err
 }
 
-func (k *Kafka) BatchConsumeWithFallback(topic []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
+func (k *Kafka) BatchConsumeWithFallback(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
 	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
 	if err != nil {
 		return nil, err
 	}
 
-	var topics []string
+	var topicsWithFallBack []string
 
-	for _, v := range topic {
-		topics = append(topics, v, fmt.Sprintf("%s-fallback", v))
+	for _, v := range topics {
+		topicsWithFallBack = append(topicsWithFallBack, v, fmt.Sprintf("%s-fallback", v))
 	}
 
-	msgChan, err := consumer.MultiBatchConsumer(topics, maxBufferSize, numberOfRoutines)
+	msgChan, err := consumer.MultiBatchConsumer(topicsWithFallBack, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
