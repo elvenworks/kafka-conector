@@ -1,7 +1,9 @@
 package consumer
 
+import "github.com/Shopify/sarama"
+
 type IConsumer interface {
-	MultiBatchConsumer(topic []string, maxBufferSize int, numberOfRoutines int) (chan []byte, error)
+	MultiBatchConsumer(topic []string, maxBufferSize int, numberOfRoutines int) (chan *sarama.ConsumerMessage, error)
 }
 
 type IClientConsumer interface {

@@ -94,7 +94,7 @@ func (k *Kafka) ProduceWithFallback(topic string, message []byte, erro error) er
 	return nil
 }
 
-func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
+func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
 	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numb
 	return msgChan, err
 }
 
-func (k *Kafka) BatchConsumeWithFallback(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan []byte, err error) {
+func (k *Kafka) BatchConsumeWithFallback(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
 	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
 	if err != nil {
 		return nil, err
