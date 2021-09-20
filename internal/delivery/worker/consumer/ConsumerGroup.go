@@ -25,17 +25,17 @@ func NewConsumerGroup(brokers []string, group string, config *sarama.Config) (*C
 }
 
 // Consume it's a MultiBatchConsumer
-func (c *ConsumerGroup) MultiBatchConsumer(topic []string, maxBufferSize int, numberOfRoutines int) (chan []byte, error) {
+func (c *ConsumerGroup) MultiBatchConsumer(topic []string, maxBufferSize int, numberOfRoutines int) (chan *sarama.ConsumerMessage, error) {
 	var count int64
 	var start = time.Now()
 	var bufChan = make(chan BatchMessages, 1000)
-	var msgsChan = make(chan []byte)
+	var msgsChan = make(chan *sarama.ConsumerMessage)
 	for i := 0; i < numberOfRoutines; i++ {
 		go func(channelNumber int) {
 			logrus.Infof("Channel %v started and consuming topic %s", channelNumber, topic)
 			for messages := range bufChan {
 				for j := range messages {
-					msgsChan <- messages[j].Message.Value
+					msgsChan <- messages[j].Message
 					messages[j].Session.MarkMessage(messages[j].Message, "")
 				}
 				count += int64(len(messages))
