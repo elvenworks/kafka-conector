@@ -47,6 +47,10 @@ func InitKafka(config KafkaConfig) *Kafka {
 	}
 }
 
+func (k *Kafka) GetConfig() *sarama.Config {
+	return k.Config
+}
+
 func (k *Kafka) Produce(topic string, message []byte) error {
 	return k.ProduceWithFallback(topic, message, nil)
 }

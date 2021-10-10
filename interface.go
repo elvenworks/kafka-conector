@@ -3,6 +3,7 @@ package kafka
 import "github.com/Shopify/sarama"
 
 type IKafka interface {
+	GetConfig() *sarama.Config
 	Produce(topic string, message []byte) error
 	ProduceWithFallback(topic string, message []byte, erro error) error
 	ConsumeWithFallback(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error)

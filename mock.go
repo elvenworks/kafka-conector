@@ -9,6 +9,11 @@ type KafkaMock struct {
 	mock.Mock
 }
 
+func (k KafkaMock) GetConfig() *sarama.Config {
+	a := k.Called()
+	return a.Get(0).(*sarama.Config)
+}
+
 func (k KafkaMock) Produce(topic string, message []byte) error {
 	a := k.Called(topic, message)
 	return a.Error(0)
