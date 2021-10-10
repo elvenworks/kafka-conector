@@ -25,7 +25,7 @@ type KafkaConfig struct {
 
 type Kafka struct {
 	brokers       []string
-	config        *sarama.Config
+	Config        *sarama.Config
 	producer      producer.IProducer
 	fallbackTries int
 }
@@ -42,7 +42,7 @@ func InitKafka(config KafkaConfig) *Kafka {
 
 	return &Kafka{
 		brokers:       config.Brokers,
-		config:        brokerConfig,
+		Config:        brokerConfig,
 		fallbackTries: config.FallbackTries,
 	}
 }
@@ -53,7 +53,7 @@ func (k *Kafka) Produce(topic string, message []byte) error {
 
 func (k *Kafka) ProduceWithFallback(topic string, message []byte, erro error) error {
 	if k.producer == nil {
-		producer, err := producer.NewProducer(k.brokers, k.config)
+		producer, err := producer.NewProducer(k.brokers, k.Config)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (k *Kafka) ProduceWithFallback(topic string, message []byte, erro error) er
 }
 
 func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
-	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
+	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numb
 }
 
 func (k *Kafka) BatchConsumeWithFallback(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
-	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.config)
+	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (k *Kafka) BatchConsumeWithFallback(topics []string, groupName string, maxB
 }
 
 func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
-	syncProducer, err := producer.NewSyncProducer(k.brokers, k.config)
+	syncProducer, err := producer.NewSyncProducer(k.brokers, k.Config)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 		return err
 	}
 
-	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.config)
+	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.Config)
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 }
 
 func (k *Kafka) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
-	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.config)
+	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.Config)
 	if err != nil {
 		return 0, err
 	}
