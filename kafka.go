@@ -3,7 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 
 	"github.com/Shopify/sarama"
 	"github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer"
@@ -13,21 +13,19 @@ import (
 )
 
 type KafkaConfig struct {
-	Brokers       []string
-	User          string
-	Password      string
-	TLS           bool
-	SASL          bool
-	Mechanism     string
-	Auth          bool
-	FallbackTries int
+	Brokers   []string
+	User      string
+	Password  string
+	TLS       bool
+	SASL      bool
+	Mechanism string
+	Auth      bool
 }
 
 type Kafka struct {
-	brokers       []string
-	Config        *sarama.Config
-	producer      producer.IProducer
-	fallbackTries int
+	brokers  []string
+	Config   *sarama.Config
+	producer producer.IProducer
 }
 
 func InitKafka(config KafkaConfig) *Kafka {
@@ -41,9 +39,8 @@ func InitKafka(config KafkaConfig) *Kafka {
 	)
 
 	return &Kafka{
-		brokers:       config.Brokers,
-		Config:        brokerConfig,
-		fallbackTries: config.FallbackTries,
+		brokers: config.Brokers,
+		Config:  brokerConfig,
 	}
 }
 
@@ -51,60 +48,44 @@ func (k *Kafka) GetConfig() *sarama.Config {
 	return k.Config
 }
 
-func (k *Kafka) Produce(topic string, message []byte) error {
-	return k.ProduceWithFallback(topic, message, nil)
-}
-
-func (k *Kafka) ProduceWithFallback(topic string, message []byte, erro error) error {
+func (k *Kafka) getProducer() producer.IProducer {
 	if k.producer == nil {
 		producer, err := producer.NewProducer(k.brokers, k.Config)
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
 		k.producer = producer
 	}
+	return k.producer
+}
 
-	if erro == nil {
-		k.producer.Produce(topic, message)
-		return nil
-	}
+func (k *Kafka) Produce(topic string, message []byte) {
+	k.getProducer().Produce(topic, message)
+}
 
+func (k *Kafka) ProduceGrave(originTopic, serviceName string, message []byte, erro error) error {
 	var payload map[string]interface{}
 	if err := json.Unmarshal(message, &payload); err != nil {
-		k.ProduceWithFallback(topic, message, err)
 		logrus.Errorf("Failed to send message to kafka, err: %s, msg: %s\n", err, message)
 		return err
 	}
 
-	nTries := 1
-	if payload["nTries"] != nil {
-		nTries = int(payload["nTries"].(float64)) + 1
-	}
-
-	payload["nTries"] = nTries
 	payload["errorConsuming"] = erro.Error()
-	bytes, err := json.Marshal(payload)
-	if err != nil {
-		k.ProduceWithFallback(topic, message, err)
-		logrus.Errorf("Failed to send message to kafka, err: %s, msg: %s\n", err, message)
-		return err
-	}
+	payload["graveServiceName"] = serviceName
+	payload["graveOriginTopic"] = originTopic
+	bytes, _ := json.Marshal(payload)
 
-	if nTries > k.fallbackTries {
-		k.producer.Produce(fmt.Sprintf("%s-grave", topic), bytes)
-	} else {
-		k.producer.Produce(fmt.Sprintf("%s-fallback", topic), bytes)
-	}
+	k.getProducer().Produce("grave", bytes)
 	return nil
 }
 
-func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
+func (k *Kafka) Consume(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
 	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	topics := []string{topic, fmt.Sprintf("%s-fallback", topic)}
+	topics := []string{topic}
 
 	msgChan, err := consumer.MultiBatchConsumer(topics, maxBufferSize, numberOfRoutines)
 	if err != nil {
@@ -114,19 +95,13 @@ func (k *Kafka) ConsumeWithFallback(topic, groupName string, maxBufferSize, numb
 	return msgChan, err
 }
 
-func (k *Kafka) BatchConsumeWithFallback(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
+func (k *Kafka) BatchConsume(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
 	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	var topicsWithFallBack []string
-
-	for _, v := range topics {
-		topicsWithFallBack = append(topicsWithFallBack, v, fmt.Sprintf("%s-fallback", v))
-	}
-
-	msgChan, err := consumer.MultiBatchConsumer(topicsWithFallBack, maxBufferSize, numberOfRoutines)
+	msgChan, err := consumer.MultiBatchConsumer(topics, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
