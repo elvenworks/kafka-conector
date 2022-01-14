@@ -23,9 +23,11 @@ type KafkaConfig struct {
 }
 
 type Kafka struct {
-	brokers  []string
-	Config   *sarama.Config
-	producer producer.IProducer
+	brokers        []string
+	Config         *sarama.Config
+	producer       producer.IProducer
+	clientConsumer consumer.IClientConsumer
+	syncProducer   producer.ISyncProducer
 }
 
 func InitKafka(config KafkaConfig) *Kafka {
@@ -110,22 +112,27 @@ func (k *Kafka) BatchConsume(topics []string, groupName string, maxBufferSize, n
 }
 
 func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
-	syncProducer, err := producer.NewSyncProducer(k.brokers, k.Config)
+	var err error
+	if k.syncProducer == nil {
+		k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
+		if err != nil {
+			return err
+		}
+	}
+
+	partition, offset, err := k.syncProducer.Produce(topic, message)
 	if err != nil {
 		return err
 	}
 
-	partition, offset, err := syncProducer.Produce(topic, message)
-	if err != nil {
-		return err
+	if k.clientConsumer == nil {
+		k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+		if err != nil {
+			return err
+		}
 	}
 
-	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.Config)
-	if err != nil {
-		return err
-	}
-
-	msg, err := clientConsumer.Consume(topic, partition, offset)
+	msg, err := k.clientConsumer.Consume(topic, partition, offset)
 	if err != nil {
 		return err
 	}
@@ -140,9 +147,11 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 }
 
 func (k *Kafka) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
-	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.Config)
-	if err != nil {
-		return 0, err
+	if k.clientConsumer == nil {
+		k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+		if err != nil {
+			return 0, err
+		}
 	}
-	return clientConsumer.GetLag(topic, consumerGroup)
+	return k.clientConsumer.GetLag(topic, consumerGroup)
 }
