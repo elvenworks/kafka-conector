@@ -23,9 +23,10 @@ type KafkaConfig struct {
 }
 
 type Kafka struct {
-	brokers  []string
-	Config   *sarama.Config
-	producer producer.IProducer
+	brokers        []string
+	Config         *sarama.Config
+	producer       producer.IProducer
+	clientConsumer consumer.IClientConsumer
 }
 
 func InitKafka(config KafkaConfig) *Kafka {
@@ -140,9 +141,11 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 }
 
 func (k *Kafka) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
-	clientConsumer, err := consumer.NewClientConsumer(k.brokers, k.Config)
-	if err != nil {
-		return 0, err
+	if k.clientConsumer == nil {
+		k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+		if err != nil {
+			return 0, err
+		}
 	}
-	return clientConsumer.GetLag(topic, consumerGroup)
+	return k.clientConsumer.GetLag(topic, consumerGroup)
 }
