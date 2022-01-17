@@ -9,14 +9,14 @@ type SyncProducer struct {
 }
 
 func NewSyncProducer(brokers []string, config *sarama.Config) (*SyncProducer, error) {
+	var err error
+	syncProducer := &SyncProducer{}
 	config.Producer.Return.Successes = true
-	producer, err := sarama.NewSyncProducer(brokers, config)
+	syncProducer.producer, err = sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		return nil, err
 	}
-	return &SyncProducer{
-		producer: producer,
-	}, nil
+	return syncProducer, nil
 }
 
 func (p *SyncProducer) Produce(topic string, message []byte) (partition int32, offset int64, err error) {
@@ -30,10 +30,13 @@ func (p *SyncProducer) Produce(topic string, message []byte) (partition int32, o
 		return 0, 0, err
 	}
 
-	err = p.producer.Close()
-	if err != nil {
-		return 0, 0, err
-	}
-
 	return partition, offset, err
+}
+
+func (p *SyncProducer) Close() error {
+	err := p.producer.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }
