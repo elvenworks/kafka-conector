@@ -7,4 +7,5 @@ type IProducer interface {
 
 type ISyncProducer interface {
 	Produce(topic string, message []byte) (partition int32, offset int64, err error)
+	Close() error
 }

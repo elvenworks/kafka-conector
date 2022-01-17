@@ -10,20 +10,21 @@ type ClientConsumer struct {
 }
 
 func NewClientConsumer(brokers []string, config *sarama.Config) (*ClientConsumer, error) {
-	client, err := sarama.NewClient(brokers, config)
+
+	var err error
+	clientConsumer := &ClientConsumer{}
+
+	clientConsumer.client, err = sarama.NewClient(brokers, config)
 	if err != nil {
 		return nil, err
 	}
 
-	consumer, err := sarama.NewConsumerFromClient(client)
+	clientConsumer.consumer, err = sarama.NewConsumerFromClient(clientConsumer.client)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ClientConsumer{
-		client:   client,
-		consumer: consumer,
-	}, nil
+	return clientConsumer, nil
 }
 
 func (c *ClientConsumer) Consume(topic string, partition int32, offset int64) (msg []byte, erro error) {
@@ -34,12 +35,6 @@ func (c *ClientConsumer) Consume(topic string, partition int32, offset int64) (m
 
 	for content := range partitionConsumer.Messages() {
 		if err := partitionConsumer.Close(); err != nil {
-			return nil, err
-		}
-		if err := c.consumer.Close(); err != nil {
-			return nil, err
-		}
-		if err := c.client.Close(); err != nil {
 			return nil, err
 		}
 		msg = content.Value
@@ -55,17 +50,14 @@ func (c *ClientConsumer) GetLag(topic, consumerGroup string) (lagTotal int64, er
 		return 0, err
 	}
 
-	var manager sarama.OffsetManager
-	var partitionManager sarama.PartitionOffsetManager
+	manager, err := sarama.NewOffsetManagerFromClient(consumerGroup, c.client)
+	if err != nil {
+		return 0, err
+	}
 
 	for partition := range partitions {
 
-		manager, err = sarama.NewOffsetManagerFromClient(consumerGroup, c.client)
-		if err != nil {
-			return 0, err
-		}
-
-		partitionManager, err = manager.ManagePartition(topic, int32(partition))
+		partitionManager, err := manager.ManagePartition(topic, int32(partition))
 		if err != nil {
 			return 0, err
 		}
@@ -78,11 +70,11 @@ func (c *ClientConsumer) GetLag(topic, consumerGroup string) (lagTotal int64, er
 		}
 
 		lagTotal += (topicOffset - consumerGroupOffset)
-	}
 
-	err = partitionManager.Close()
-	if err != nil {
-		return 0, err
+		err = partitionManager.Close()
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	err = manager.Close()
@@ -90,16 +82,16 @@ func (c *ClientConsumer) GetLag(topic, consumerGroup string) (lagTotal int64, er
 		return 0, err
 	}
 
-	err = c.consumer.Close()
-	if err != nil {
-		return 0, err
-	}
-
-	err = c.client.Close()
-	if err != nil {
-		return 0, err
-	}
-
 	return lagTotal, nil
 
+}
+
+func (c *ClientConsumer) Close() error {
+	if err := c.consumer.Close(); err != nil {
+		return err
+	}
+	if err := c.client.Close(); err != nil {
+		return err
+	}
+	return nil
 }

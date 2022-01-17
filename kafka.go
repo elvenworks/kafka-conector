@@ -113,24 +113,23 @@ func (k *Kafka) BatchConsume(topics []string, groupName string, maxBufferSize, n
 
 func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 	var err error
-	if k.syncProducer == nil {
-		k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
-		if err != nil {
-			return err
-		}
+
+	k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
+	if err != nil {
+		return err
 	}
+	defer k.syncProducer.Close()
 
 	partition, offset, err := k.syncProducer.Produce(topic, message)
 	if err != nil {
 		return err
 	}
 
-	if k.clientConsumer == nil {
-		k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
-		if err != nil {
-			return err
-		}
+	k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+	if err != nil {
+		return err
 	}
+	defer k.clientConsumer.Close()
 
 	msg, err := k.clientConsumer.Consume(topic, partition, offset)
 	if err != nil {
@@ -147,11 +146,14 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message []byte) error {
 }
 
 func (k *Kafka) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
-	if k.clientConsumer == nil {
-		k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
-		if err != nil {
-			return 0, err
-		}
+
+	k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+	if err != nil {
+		return 0, err
 	}
-	return k.clientConsumer.GetLag(topic, consumerGroup)
+	defer k.clientConsumer.Close()
+
+	lagTotal, err = k.clientConsumer.GetLag(topic, consumerGroup)
+
+	return lagTotal, err
 }
