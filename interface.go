@@ -4,10 +4,10 @@ import "github.com/Shopify/sarama"
 
 type IKafka interface {
 	GetConfig() *sarama.Config
-	Produce(topic string, message []byte)
-	ProduceGrave(originTopic, serviceName string, message []byte, erro error) error
+	Produce(topic string, message interface{})
 	Consume(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error)
 	BatchConsume(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error)
-	ProduceAndConsumeOnce(topic string, message []byte) error
+	ProduceSync(topic string, message interface{}) error
+	ProduceAndConsumeOnce(topic string, message interface{}) error
 	GetLag(topic, consumerGroup string) (lagTotal int64, err error)
 }

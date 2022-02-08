@@ -1,6 +1,8 @@
 package producer
 
 import (
+	"encoding/json"
+
 	"github.com/Shopify/sarama"
 )
 
@@ -19,11 +21,14 @@ func NewSyncProducer(brokers []string, config *sarama.Config) (*SyncProducer, er
 	return syncProducer, nil
 }
 
-func (p *SyncProducer) Produce(topic string, message []byte) (partition int32, offset int64, err error) {
+func (p *SyncProducer) Produce(topic string, message interface{}) (partition int32, offset int64, err error) {
+
+	bytes, _ := json.Marshal(message)
+
 	partition, offset, err = p.producer.SendMessage(
 		&sarama.ProducerMessage{
 			Topic: topic,
-			Value: sarama.ByteEncoder(message),
+			Value: sarama.ByteEncoder(bytes),
 		},
 	)
 	if err != nil {

@@ -94,16 +94,16 @@ func (_m *KafkaMock) GetLag(topic string, consumerGroup string) (int64, error) {
 }
 
 // Produce provides a mock function with given fields: topic, message
-func (_m *KafkaMock) Produce(topic string, message []byte) {
+func (_m *KafkaMock) Produce(topic string, message interface{}) {
 	_m.Called(topic, message)
 }
 
 // ProduceAndConsumeOnce provides a mock function with given fields: topic, message
-func (_m *KafkaMock) ProduceAndConsumeOnce(topic string, message []byte) error {
+func (_m *KafkaMock) ProduceAndConsumeOnce(topic string, message interface{}) error {
 	ret := _m.Called(topic, message)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, []byte) error); ok {
+	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
 		r0 = rf(topic, message)
 	} else {
 		r0 = ret.Error(0)
@@ -112,13 +112,13 @@ func (_m *KafkaMock) ProduceAndConsumeOnce(topic string, message []byte) error {
 	return r0
 }
 
-// ProduceGrave provides a mock function with given fields: originTopic, serviceName, message, erro
-func (_m *KafkaMock) ProduceGrave(originTopic string, serviceName string, message []byte, erro error) error {
-	ret := _m.Called(originTopic, serviceName, message, erro)
+// ProduceSync provides a mock function with given fields: topic, message
+func (_m *KafkaMock) ProduceSync(topic string, message interface{}) error {
+	ret := _m.Called(topic, message)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, []byte, error) error); ok {
-		r0 = rf(originTopic, serviceName, message, erro)
+	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
+		r0 = rf(topic, message)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -1,6 +1,8 @@
 package producer
 
 import (
+	"encoding/json"
+
 	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 )
@@ -19,12 +21,14 @@ func NewProducer(brokers []string, config *sarama.Config) (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) Produce(topic string, message []byte) {
+func (p *Producer) Produce(topic string, message interface{}) {
+
+	bytes, _ := json.Marshal(message)
 
 	select {
 	case p.producer.Input() <- &sarama.ProducerMessage{
 		Topic: topic,
-		Value: sarama.ByteEncoder(message),
+		Value: sarama.ByteEncoder(bytes),
 	}:
 	case err := <-p.producer.Errors():
 		logrus.Errorf("Failed to send message to kafka, err: %s, msg: %s\n", err, message)
