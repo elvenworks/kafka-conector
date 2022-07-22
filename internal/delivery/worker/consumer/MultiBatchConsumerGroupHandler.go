@@ -16,7 +16,6 @@ type ConsumerGroupHandler interface {
 // ----- batch handler
 
 type MultiBatchConsumerConfig struct {
-	BufferCapacity        int // msg capacity
 	MaxBufSize            int // max message size
 	TickerIntervalSeconds int
 
@@ -48,10 +47,7 @@ func NewMultiBatchConsumerGroupHandler(cfg *MultiBatchConsumerConfig) ConsumerGr
 		ready: make(chan bool, 0),
 	}
 
-	if cfg.BufferCapacity == 0 {
-		cfg.BufferCapacity = 10000
-	}
-	handler.msgBuf = make([]*ConsumerSessionMessage, 0, cfg.BufferCapacity)
+	handler.msgBuf = make([]*ConsumerSessionMessage, 0)
 	if cfg.MaxBufSize == 0 {
 		cfg.MaxBufSize = 8000
 	}
@@ -91,7 +87,7 @@ func (h *multiBatchConsumerGroupHandler) Reset() {
 func (h *multiBatchConsumerGroupHandler) flushBuffer() {
 	if len(h.msgBuf) > 0 {
 		h.cfg.BufChan <- h.msgBuf
-		h.msgBuf = make([]*ConsumerSessionMessage, 0, h.cfg.BufferCapacity)
+		h.msgBuf = make([]*ConsumerSessionMessage, 0)
 	}
 }
 
