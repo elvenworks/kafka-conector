@@ -6,27 +6,31 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer"
+	consumerV1 "github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer/v1"
 	"github.com/elvenworks/kafka-conector/internal/delivery/worker/producer"
 	"github.com/elvenworks/kafka-conector/internal/driver/kafka"
+	factory "github.com/elvenworks/kafka-conector/internal/factory"
 	"github.com/sirupsen/logrus"
 )
 
 type KafkaConfig struct {
-	Brokers   []string
-	User      string
-	Password  string
-	TLS       bool
-	SASL      bool
-	Mechanism string
-	Auth      bool
+	Brokers              []string
+	User                 string
+	Password             string
+	TLS                  bool
+	SASL                 bool
+	Mechanism            string
+	Auth                 bool
+	ConsumerGroupVersion string
 }
 
 type Kafka struct {
-	brokers        []string
-	Config         *sarama.Config
-	producer       producer.IProducer
-	clientConsumer consumer.IClientConsumer
-	syncProducer   producer.ISyncProducer
+	brokers              []string
+	Config               *sarama.Config
+	producer             producer.IProducer
+	clientConsumer       consumer.IClientConsumer
+	syncProducer         producer.ISyncProducer
+	ConsumerGroupVersion string
 }
 
 func InitKafka(config KafkaConfig) *Kafka {
@@ -40,8 +44,9 @@ func InitKafka(config KafkaConfig) *Kafka {
 	)
 
 	return &Kafka{
-		brokers: config.Brokers,
-		Config:  brokerConfig,
+		brokers:              config.Brokers,
+		Config:               brokerConfig,
+		ConsumerGroupVersion: config.ConsumerGroupVersion,
 	}
 }
 
@@ -61,7 +66,7 @@ func (k *Kafka) Produce(topic string, message interface{}) {
 }
 
 func (k *Kafka) Consume(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
-	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.Config)
+	consumer, err := factory.NewConsumerGroup(k.ConsumerGroupVersion, k.brokers, groupName, k.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func (k *Kafka) Consume(topic, groupName string, maxBufferSize, numberOfRoutines
 }
 
 func (k *Kafka) BatchConsume(topics []string, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
-	consumer, err := consumer.NewConsumerGroup(k.brokers, groupName, k.Config)
+	consumer, err := factory.NewConsumerGroup(k.ConsumerGroupVersion, k.brokers, groupName, k.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +124,7 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message interface{}) error {
 		return err
 	}
 
-	k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+	k.clientConsumer, err = consumerV1.NewClientConsumer(k.brokers, k.Config)
 	if err != nil {
 		return err
 	}
@@ -141,7 +146,7 @@ func (k *Kafka) ProduceAndConsumeOnce(topic string, message interface{}) error {
 
 func (k *Kafka) GetLag(topic, consumerGroup string) (lagTotal int64, err error) {
 
-	k.clientConsumer, err = consumer.NewClientConsumer(k.brokers, k.Config)
+	k.clientConsumer, err = consumerV1.NewClientConsumer(k.brokers, k.Config)
 	if err != nil {
 		return 0, err
 	}
