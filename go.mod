@@ -6,7 +6,8 @@ require (
 	github.com/Shopify/sarama v1.29.1
 	github.com/antonfisher/nested-logrus-formatter v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/xdg/scram v1.0.3
-	github.com/zput/zxcTool v1.2.2 // indirect
+	github.com/zput/zxcTool v1.2.2
+	gorm.io/gorm v1.23.8
 )
