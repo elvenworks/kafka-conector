@@ -65,6 +65,17 @@ func (k *Kafka) Produce(topic string, message interface{}) {
 	k.producer.Produce(topic, message)
 }
 
+func (k *Kafka) ProduceWithMessageKey(topic string, key interface{}, message interface{}) {
+	if k.producer == nil {
+		producer, err := producer.NewProducer(k.brokers, k.Config)
+		if err != nil {
+			log.Fatal(err)
+		}
+		k.producer = producer
+	}
+	k.producer.ProduceWithMessageKey(topic, key, message)
+}
+
 func (k *Kafka) Consume(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
 	consumer, err := factory.NewConsumerGroup(k.ConsumerGroupVersion, k.brokers, groupName, k.Config)
 	if err != nil {
@@ -74,6 +85,26 @@ func (k *Kafka) Consume(topic, groupName string, maxBufferSize, numberOfRoutines
 	topics := []string{topic}
 
 	msgChan, err := consumer.MultiBatchConsumer(topics, maxBufferSize, numberOfRoutines)
+	if err != nil {
+		return nil, err
+	}
+
+	return msgChan, err
+}
+
+func (k *Kafka) ConsumeOffsetOldest(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
+
+	config := *k.Config
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	consumer, err := factory.NewConsumerGroup(k.ConsumerGroupVersion, k.brokers, groupName, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	topics := []string{topic}
+	cmr, _ := sarama.NewConsumer(k.brokers, nil)
+	partitionList, _ := cmr.Partitions(topic)
+	msgChan, err := consumer.MultiBatchConsumer(topics, len(partitionList), numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +135,21 @@ func (k *Kafka) ProduceSync(topic string, message interface{}) error {
 	defer k.syncProducer.Close()
 
 	_, _, err = k.syncProducer.Produce(topic, message)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func (k *Kafka) ProduceSyncWithMessageKey(topic string, key interface{}, message interface{}) error {
+	var err error
+	k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
+	if err != nil {
+		return err
+	}
+	defer k.syncProducer.Close()
+
+	_, _, err = k.syncProducer.ProduceWithMessageKey(topic, key, message)
 	if err != nil {
 		return err
 	}

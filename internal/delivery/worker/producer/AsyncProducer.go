@@ -36,6 +36,23 @@ func (p *Producer) Produce(topic string, message interface{}) {
 	}
 }
 
+func (p *Producer) ProduceWithMessageKey(topic string, key interface{}, message interface{}) {
+
+	bytesKey, _ := json.Marshal(key)
+	bytes, _ := json.Marshal(message)
+
+	select {
+	case p.producer.Input() <- &sarama.ProducerMessage{
+		Topic: topic,
+		Key:   sarama.ByteEncoder(bytesKey),
+		Value: sarama.ByteEncoder(bytes),
+	}:
+	case err := <-p.producer.Errors():
+		logrus.Errorf("Failed to send message to kafka, err: %s, msg: %s\n", err, message)
+		p.ProduceWithMessageKey(topic, key, message) // infinity
+	}
+}
+
 func (p *Producer) Close() error {
 	if p != nil {
 		return p.producer.Close()
