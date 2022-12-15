@@ -56,6 +56,28 @@ func (_m *KafkaMock) Consume(topic string, groupName string, maxBufferSize int, 
 	return r0, r1
 }
 
+func (_m *KafkaMock) ConsumeOffsetOldest(topic string, groupName string, maxBufferSize int, numberOfRoutines int) (chan *sarama.ConsumerMessage, error) {
+	ret := _m.Called(topic, groupName, maxBufferSize, numberOfRoutines)
+
+	var r0 chan *sarama.ConsumerMessage
+	if rf, ok := ret.Get(0).(func(string, string, int, int) chan *sarama.ConsumerMessage); ok {
+		r0 = rf(topic, groupName, maxBufferSize, numberOfRoutines)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(chan *sarama.ConsumerMessage)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string, int, int) error); ok {
+		r1 = rf(topic, groupName, maxBufferSize, numberOfRoutines)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetConfig provides a mock function with given fields:
 func (_m *KafkaMock) GetConfig() *sarama.Config {
 	ret := _m.Called()
@@ -98,6 +120,10 @@ func (_m *KafkaMock) Produce(topic string, message interface{}) {
 	_m.Called(topic, message)
 }
 
+func (_m *KafkaMock) ProduceWithMessageKey(topic string, key interface{}, message interface{}) {
+	_m.Called(topic, key, message)
+}
+
 // ProduceAndConsumeOnce provides a mock function with given fields: topic, message
 func (_m *KafkaMock) ProduceAndConsumeOnce(topic string, message interface{}) error {
 	ret := _m.Called(topic, message)
@@ -119,6 +145,19 @@ func (_m *KafkaMock) ProduceSync(topic string, message interface{}) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
 		r0 = rf(topic, message)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+func (_m *KafkaMock) ProduceSyncWithMessageKey(topic string, key interface{}, message interface{}) error {
+	ret := _m.Called(topic, key, message)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, interface{}, interface{}) error); ok {
+		r0 = rf(topic, key, message)
 	} else {
 		r0 = ret.Error(0)
 	}
