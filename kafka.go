@@ -102,9 +102,7 @@ func (k *Kafka) ConsumeOffsetOldest(topic, groupName string, maxBufferSize, numb
 	}
 
 	topics := []string{topic}
-	cmr, _ := sarama.NewConsumer(k.brokers, nil)
-	partitionList, _ := cmr.Partitions(topic)
-	msgChan, err := consumer.MultiBatchConsumer(topics, len(partitionList), numberOfRoutines)
+	msgChan, err := consumer.MultiBatchConsumer(topics, maxBufferSize, numberOfRoutines)
 	if err != nil {
 		return nil, err
 	}
