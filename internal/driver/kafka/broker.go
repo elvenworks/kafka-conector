@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"crypto/sha512"
-	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/xdg/scram"
@@ -34,7 +33,7 @@ func (x *XDGSCRAMClient) Done() bool {
 
 func Config(user, password, mechanism string, auth, SASL, TLS bool) *sarama.Config {
 	cfg := sarama.NewConfig()
-	cfg.Net.DialTimeout = time.Second
+
 	if !auth {
 		return cfg
 	}
