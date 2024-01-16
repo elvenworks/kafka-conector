@@ -124,14 +124,23 @@ func (k *Kafka) BatchConsume(topics []string, groupName string, maxBufferSize, n
 	return msgChan, err
 }
 
+func (k *Kafka) newSyncProducer() error {
+	if k.syncProducer == nil {
+		syncProducer, err := producer.NewSyncProducer(k.brokers, k.Config)
+		if err != nil {
+			return err
+		}
+		k.syncProducer = syncProducer
+	}
+	return nil
+}
+
 func (k *Kafka) ProduceSync(topic string, message interface{}) error {
 	var err error
-	k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
+	err = k.newSyncProducer()
 	if err != nil {
 		return err
 	}
-	defer k.syncProducer.Close()
-
 	_, _, err = k.syncProducer.Produce(topic, message)
 	if err != nil {
 		return err
@@ -141,12 +150,7 @@ func (k *Kafka) ProduceSync(topic string, message interface{}) error {
 
 func (k *Kafka) ProduceSyncWithMessageKey(topic string, key interface{}, message interface{}) error {
 	var err error
-	k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
-	if err != nil {
-		return err
-	}
-	defer k.syncProducer.Close()
-
+	err = k.newSyncProducer()
 	_, _, err = k.syncProducer.ProduceWithMessageKey(topic, key, message)
 	if err != nil {
 		return err
@@ -156,12 +160,10 @@ func (k *Kafka) ProduceSyncWithMessageKey(topic string, key interface{}, message
 
 func (k *Kafka) ProduceAndConsumeOnce(topic string, message interface{}) error {
 	var err error
-
-	k.syncProducer, err = producer.NewSyncProducer(k.brokers, k.Config)
+	err = k.newSyncProducer()
 	if err != nil {
 		return err
 	}
-	defer k.syncProducer.Close()
 
 	partition, offset, err := k.syncProducer.Produce(topic, message)
 	if err != nil {
