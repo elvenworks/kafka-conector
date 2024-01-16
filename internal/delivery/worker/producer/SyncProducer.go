@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Shopify/sarama"
+	"github.com/sirupsen/logrus"
 )
 
 type SyncProducer struct {
@@ -34,6 +35,7 @@ func (p *SyncProducer) Produce(topic string, message interface{}) (partition int
 	if err != nil {
 		return 0, 0, err
 	}
+	logrus.Info("[kafka-connector] message saved in topic: ", topic, " partition: ", partition, " Offset: ", offset, " [SyncProduce]")
 
 	return partition, offset, err
 }
@@ -53,6 +55,7 @@ func (p *SyncProducer) ProduceWithMessageKey(topic string, key interface{}, mess
 	if err != nil {
 		return 0, 0, err
 	}
+	logrus.Info("[kafka-connector] message saved in topic: ", topic, " partition: ", partition, " Offset: ", offset, " key: ", key, " [SyncProduceWithKey]")
 
 	return partition, offset, err
 }
