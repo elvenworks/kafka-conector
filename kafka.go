@@ -55,8 +55,11 @@ func (k *Kafka) GetConfig() *sarama.Config {
 }
 
 func (k *Kafka) Produce(topic string, message interface{}) {
+	logrus.Infof("[produce] %s - %+v", topic, message)
+
 	if k.producer == nil {
 		producer, err := producer.NewProducer(k.brokers, k.Config)
+		logrus.Infof("[produce] new producer")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -66,8 +69,11 @@ func (k *Kafka) Produce(topic string, message interface{}) {
 }
 
 func (k *Kafka) ProduceWithMessageKey(topic string, key interface{}, message interface{}) {
+	logrus.Infof("[produce with key] %s - %+v", topic, message)
+
 	if k.producer == nil {
 		producer, err := producer.NewProducer(k.brokers, k.Config)
+		logrus.Infof("[produce with key] new producer")
 		if err != nil {
 			log.Fatal(err)
 		}
