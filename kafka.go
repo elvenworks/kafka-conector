@@ -57,29 +57,28 @@ func (k *Kafka) GetConfig() *sarama.Config {
 func (k *Kafka) Produce(topic string, message interface{}) {
 	logrus.Infof("[produce] %s - %+v", topic, message)
 
-	if k.producer == nil {
-		producer, err := producer.NewProducer(k.brokers, k.Config)
-		logrus.Infof("[produce] new producer")
-		if err != nil {
-			log.Fatal(err)
-		}
-		k.producer = producer
+	producer, err := producer.NewProducer(k.brokers, k.Config)
+	if err != nil {
+		log.Fatal(err)
 	}
-	k.producer.Produce(topic, message)
+	defer producer.Close()
+
+	producer.Produce(topic, message)
+
 }
 
 func (k *Kafka) ProduceWithMessageKey(topic string, key interface{}, message interface{}) {
 	logrus.Infof("[produce with key] %s - %+v", topic, message)
 
-	if k.producer == nil {
-		producer, err := producer.NewProducer(k.brokers, k.Config)
-		logrus.Infof("[produce with key] new producer")
-		if err != nil {
-			log.Fatal(err)
-		}
-		k.producer = producer
+	producer, err := producer.NewProducer(k.brokers, k.Config)
+	logrus.Infof("[produce with key] new producer")
+	if err != nil {
+		log.Fatal(err)
 	}
-	k.producer.ProduceWithMessageKey(topic, key, message)
+
+	defer producer.Close()
+
+	producer.ProduceWithMessageKey(topic, key, message)
 }
 
 func (k *Kafka) Consume(topic, groupName string, maxBufferSize, numberOfRoutines int) (msgChannel chan *sarama.ConsumerMessage, err error) {
@@ -130,48 +129,57 @@ func (k *Kafka) BatchConsume(topics []string, groupName string, maxBufferSize, n
 	return msgChan, err
 }
 
-func (k *Kafka) newSyncProducer() error {
-	if k.syncProducer == nil {
-		syncProducer, err := producer.NewSyncProducer(k.brokers, k.Config)
-		if err != nil {
-			return err
-		}
-		k.syncProducer = syncProducer
+func (k *Kafka) newSyncProducer() (*producer.SyncProducer, error) {
+
+	logrus.Infof("[produceSync] new producer")
+	syncProducer, err := producer.NewSyncProducer(k.brokers, k.Config)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	return syncProducer, nil
 }
 
 func (k *Kafka) ProduceSync(topic string, message interface{}) error {
 	var err error
-	err = k.newSyncProducer()
+	syncProducer, err := k.newSyncProducer()
 	if err != nil {
 		return err
 	}
-	_, _, err = k.syncProducer.Produce(topic, message)
+	defer syncProducer.Close()
+
+	_, _, err = syncProducer.Produce(topic, message)
 	if err != nil {
 		return err
 	}
+
 	return err
 }
 
 func (k *Kafka) ProduceSyncWithMessageKey(topic string, key interface{}, message interface{}) error {
 	var err error
-	err = k.newSyncProducer()
-	_, _, err = k.syncProducer.ProduceWithMessageKey(topic, key, message)
+	syncProducer, err := k.newSyncProducer()
 	if err != nil {
 		return err
 	}
+	defer syncProducer.Close()
+
+	_, _, err = syncProducer.ProduceWithMessageKey(topic, key, message)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
 func (k *Kafka) ProduceAndConsumeOnce(topic string, message interface{}) error {
 	var err error
-	err = k.newSyncProducer()
+	syncProducer, err := k.newSyncProducer()
 	if err != nil {
 		return err
 	}
+	defer syncProducer.Close()
 
-	partition, offset, err := k.syncProducer.Produce(topic, message)
+	partition, offset, err := syncProducer.Produce(topic, message)
 	if err != nil {
 		return err
 	}
