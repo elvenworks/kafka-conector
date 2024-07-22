@@ -6,7 +6,7 @@ import (
 	consumerV1 "github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer/v1"
 	"github.com/elvenworks/kafka-conector/internal/driver/kafka"
 	factory "github.com/elvenworks/kafka-conector/internal/factory"
-	"github.com/elvenworks/kafka-conector/kafka/common"
+	"github.com/elvenworks/kafka-conector/kafka/config"
 )
 
 type Kafka struct {
@@ -16,7 +16,7 @@ type Kafka struct {
 	ConsumerGroupVersion string
 }
 
-func InitConsumer(config common.KafkaConfig) IConsumer {
+func Init(config config.KafkaConfig) IConsumer {
 	brokerConfig := kafka.Config(
 		config.User,
 		config.Password,

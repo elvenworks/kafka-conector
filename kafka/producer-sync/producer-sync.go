@@ -8,7 +8,7 @@ import (
 	consumerV1 "github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer/v1"
 	"github.com/elvenworks/kafka-conector/internal/delivery/worker/producer"
 	"github.com/elvenworks/kafka-conector/internal/driver/kafka"
-	"github.com/elvenworks/kafka-conector/kafka/common"
+	"github.com/elvenworks/kafka-conector/kafka/config"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,7 +19,7 @@ type Kafka struct {
 	syncProducer   producer.ISyncProducer
 }
 
-func InitProducerSync(config common.KafkaConfig) IProducerSync {
+func Init(config config.KafkaConfig) IProducerSync {
 	brokerConfig := kafka.Config(
 		config.User,
 		config.Password,

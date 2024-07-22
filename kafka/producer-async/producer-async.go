@@ -6,7 +6,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/elvenworks/kafka-conector/internal/delivery/worker/producer"
 	"github.com/elvenworks/kafka-conector/internal/driver/kafka"
-	"github.com/elvenworks/kafka-conector/kafka/common"
+	"github.com/elvenworks/kafka-conector/kafka/config"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,7 +16,7 @@ type Kafka struct {
 	producer producer.IProducer
 }
 
-func InitProducerAsync(config common.KafkaConfig) IProducerAsync {
+func Init(config config.KafkaConfig) IProducerAsync {
 	brokerConfig := kafka.Config(
 		config.User,
 		config.Password,
