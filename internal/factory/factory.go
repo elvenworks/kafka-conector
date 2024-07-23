@@ -2,9 +2,9 @@ package factory
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer"
-	consumerV1 "github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer/v1"
-	consumerV2 "github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer/v2"
+	"github.com/elvenworks/kafka-conector/v2/internal/delivery/worker/consumer"
+	consumerV1 "github.com/elvenworks/kafka-conector/v2/internal/delivery/worker/consumer/v1"
+	consumerV2 "github.com/elvenworks/kafka-conector/v2/internal/delivery/worker/consumer/v2"
 )
 
 const (

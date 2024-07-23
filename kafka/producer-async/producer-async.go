@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/Shopify/sarama"
-	"github.com/elvenworks/kafka-conector/internal/delivery/worker/producer"
-	"github.com/elvenworks/kafka-conector/internal/driver/kafka"
-	"github.com/elvenworks/kafka-conector/kafka/config"
+	"github.com/elvenworks/kafka-conector/v2/internal/delivery/worker/producer"
+	"github.com/elvenworks/kafka-conector/v2/internal/driver/kafka"
+	"github.com/elvenworks/kafka-conector/v2/kafka/config"
 	"github.com/sirupsen/logrus"
 )
 

@@ -2,11 +2,11 @@ package consumer
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer"
-	consumerV1 "github.com/elvenworks/kafka-conector/internal/delivery/worker/consumer/v1"
-	"github.com/elvenworks/kafka-conector/internal/driver/kafka"
-	factory "github.com/elvenworks/kafka-conector/internal/factory"
-	"github.com/elvenworks/kafka-conector/kafka/config"
+	"github.com/elvenworks/kafka-conector/v2/internal/delivery/worker/consumer"
+	consumerV1 "github.com/elvenworks/kafka-conector/v2/internal/delivery/worker/consumer/v1"
+	"github.com/elvenworks/kafka-conector/v2/internal/driver/kafka"
+	factory "github.com/elvenworks/kafka-conector/v2/internal/factory"
+	"github.com/elvenworks/kafka-conector/v2/kafka/config"
 )
 
 type Kafka struct {
