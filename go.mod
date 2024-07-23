@@ -1,4 +1,4 @@
-module github.com/elvenworks/kafka-conector
+module github.com/elvenworks/kafka-conector/v2
 
 go 1.16
 
